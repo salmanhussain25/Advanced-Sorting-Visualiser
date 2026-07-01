@@ -15,9 +15,12 @@ const comparisonsDisplay = document.getElementById("comparisons");
 const swapsDisplay = document.getElementById("swaps");
 const timeDisplay = document.getElementById("time");
 
+// Sync exact number input if it exists
+const sizeInput = document.getElementById("sizeInput");
+
 let array = [];
-let arraySize = sizeSlider.value;
-let delay = 100 - speedSlider.value;
+let arraySize = sizeSlider ? sizeSlider.value : 30;
+let delay = 100 - (speedSlider ? speedSlider.value : 50);
 let isSorting = false;
 let isPaused = false;
 let comparisons = 0;
@@ -48,62 +51,71 @@ const gradientTheme = document.getElementById("gradientTheme");
 const neonTheme = document.getElementById("neonTheme");
 const woodenTheme = document.getElementById("woodenTheme");
 
-themeToggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark-mode");
-  document.querySelector("header").classList.toggle("dark-mode");
-  document.querySelector("footer").classList.toggle("dark-mode");
-  themeToggle.innerHTML = document.body.classList.contains("dark-mode")
-    ? '<i class="fas fa-sun"></i>'
-    : '<i class="fas fa-moon"></i>';
-});
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    document.querySelector("header")?.classList.toggle("dark-mode");
+    document.querySelector("footer")?.classList.toggle("dark-mode");
+    themeToggle.innerHTML = document.body.classList.contains("dark-mode")
+      ? '<i class="fas fa-sun"></i>'
+      : '<i class="fas fa-moon"></i>';
+  });
+}
 
-gradientTheme.addEventListener("click", () => {
-  if (document.body.classList.contains("gradient-mode")) {
-    document.body.classList.remove("gradient-mode");
-    document.querySelector("header").classList.remove("gradient-mode");
-    document.querySelector("footer").classList.remove("gradient-mode");
-  } else {
-    document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
-    document.body.classList.add("gradient-mode");
-    document.querySelector("header").classList.remove("dark-mode", "neon-mode", "wooden-mode");
-    document.querySelector("header").classList.add("gradient-mode");
-    document.querySelector("footer").classList.remove("dark-mode", "neon-mode", "wooden-mode");
-    document.querySelector("footer").classList.add("gradient-mode");
-  }
-});
+if (gradientTheme) {
+  gradientTheme.addEventListener("click", () => {
+    if (document.body.classList.contains("gradient-mode")) {
+      document.body.classList.remove("gradient-mode");
+      document.querySelector("header")?.classList.remove("gradient-mode");
+      document.querySelector("footer")?.classList.remove("gradient-mode");
+    } else {
+      document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
+      document.body.classList.add("gradient-mode");
+      document.querySelector("header")?.classList.remove("dark-mode", "neon-mode", "wooden-mode");
+      document.querySelector("header")?.classList.add("gradient-mode");
+      document.querySelector("footer")?.classList.remove("dark-mode", "neon-mode", "wooden-mode");
+      document.querySelector("footer")?.classList.add("gradient-mode");
+    }
+  });
+}
 
-neonTheme.addEventListener("click", () => {
-  if (document.body.classList.contains("neon-mode")) {
-    document.body.classList.remove("neon-mode");
-    document.querySelector("header").classList.remove("neon-mode");
-    document.querySelector("footer").classList.remove("neon-mode");
-  } else {
-    document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-    document.body.classList.add("neon-mode");
-    document.querySelector("header").classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-    document.querySelector("header").classList.add("neon-mode");
-    document.querySelector("footer").classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-    document.querySelector("footer").classList.add("neon-mode");
-  }
-});
+if (neonTheme) {
+  neonTheme.addEventListener("click", () => {
+    if (document.body.classList.contains("neon-mode")) {
+      document.body.classList.remove("neon-mode");
+      document.querySelector("header")?.classList.remove("neon-mode");
+      document.querySelector("footer")?.classList.remove("neon-mode");
+    } else {
+      document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
+      document.body.classList.add("neon-mode");
+      document.querySelector("header")?.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
+      document.querySelector("header")?.classList.add("neon-mode");
+      document.querySelector("footer")?.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
+      document.querySelector("footer")?.classList.add("neon-mode");
+    }
+  });
+}
 
-woodenTheme.addEventListener("click", () => {
-  if (document.body.classList.contains("wooden-mode")) {
-    document.body.classList.remove("wooden-mode");
-    document.querySelector("header").classList.remove("wooden-mode");
-    document.querySelector("footer").classList.remove("wooden-mode");
-  } else {
-    document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
-    document.body.classList.add("wooden-mode");
-    document.querySelector("header").classList.remove("dark-mode", "gradient-mode", "neon-mode");
-    document.querySelector("header").classList.add("wooden-mode");
-    document.querySelector("footer").classList.remove("dark-mode", "gradient-mode", "neon-mode");
-    document.querySelector("footer").classList.add("wooden-mode");
-  }
-});
+if (woodenTheme) {
+  woodenTheme.addEventListener("click", () => {
+    if (document.body.classList.contains("wooden-mode")) {
+      document.body.classList.remove("wooden-mode");
+      document.querySelector("header")?.classList.remove("wooden-mode");
+      document.querySelector("footer")?.classList.remove("wooden-mode");
+    } else {
+      document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
+      document.body.classList.add("wooden-mode");
+      document.querySelector("header")?.classList.remove("dark-mode", "gradient-mode", "neon-mode");
+      document.querySelector("header")?.classList.add("wooden-mode");
+      document.querySelector("footer")?.classList.remove("dark-mode", "gradient-mode", "neon-mode");
+      document.querySelector("footer")?.classList.add("wooden-mode");
+    }
+  });
+}
 
 // Render the main window array
 function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []) {
+  if (!arrayContainer) return;
   arrayContainer.innerHTML = "";
   for (let i = 0; i < array.length; i++) {
     const bar = document.createElement("div");
@@ -116,16 +128,16 @@ function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []
   }
 }
 
-// Audio configuration
+// Audio configurations (Safely handles missing files)
 const swapSound = new Audio("swap.wav");
 const compareSound = new Audio("compare.wav");
 
 async function swap(i, j) {
   [array[i], array[j]] = [array[j], array[i]];
   swaps++;
-  swapsDisplay.textContent = swaps;
+  if (swapsDisplay) swapsDisplay.textContent = swaps;
   renderArray([], [i, j]);
-  swapSound.play().catch(() => {}); // catch blocks protect against un-interacted DOM audio blocks
+  swapSound.play().catch(() => {}); 
   await sleep(delay);
 }
 
@@ -137,6 +149,7 @@ function sleep(ms) {
 function pause() {
   return new Promise((resolve) => {
     const resumeButton = document.getElementById("pause");
+    if (!resumeButton) return resolve();
     resumeButton.textContent = "Resume";
     const resumeHandler = () => {
       isPaused = false;
@@ -153,9 +166,9 @@ function reset() {
   isPaused = false;
   comparisons = 0;
   swaps = 0;
-  comparisonsDisplay.textContent = comparisons;
-  swapsDisplay.textContent = swaps;
-  timeDisplay.textContent = 0;
+  if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+  if (swapsDisplay) swapsDisplay.textContent = swaps;
+  if (timeDisplay) timeDisplay.textContent = 0;
   generateArray();
 }
 
@@ -165,7 +178,7 @@ async function bubbleSort() {
     for (let j = 0; j < array.length - i - 1; j++) {
       if (isPaused) await pause();
       comparisons++;
-      comparisonsDisplay.textContent = comparisons;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
       compareSound.play().catch(() => {});
       await sleep(delay);
@@ -182,7 +195,7 @@ async function selectionSort() {
     for (let j = i + 1; j < array.length; j++) {
       if (isPaused) await pause();
       comparisons++;
-      comparisonsDisplay.textContent = comparisons;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, minIndex]);
       compareSound.play().catch(() => {});
       await sleep(delay);
@@ -201,7 +214,7 @@ async function insertionSort() {
     while (j >= 0 && array[j] > key) {
       if (isPaused) await pause();
       comparisons++;
-      comparisonsDisplay.textContent = comparisons;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
       compareSound.play().catch(() => {});
       await sleep(delay);
@@ -233,7 +246,7 @@ async function merge(low, mid, high) {
   while (i <= mid && j <= high) {
     if (isPaused) await pause();
     comparisons++;
-    comparisonsDisplay.textContent = comparisons;
+    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([i, j]);
     compareSound.play().catch(() => {});
     await sleep(delay);
@@ -266,7 +279,7 @@ async function partition(low, high) {
   for (let j = low; j < high; j++) {
     if (isPaused) await pause();
     comparisons++;
-    comparisonsDisplay.textContent = comparisons;
+    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([j, high]);
     compareSound.play().catch(() => {});
     await sleep(delay);
@@ -301,61 +314,88 @@ async function heapify(n, i) {
 }
 
 // --- ORIGINAL EVENT LISTENERS ---
-generateArrayButton.addEventListener("click", generateArray);
-sizeSlider.addEventListener("input", () => {
-  arraySize = sizeSlider.value;
-  generateArray();
-});
-speedSlider.addEventListener("input", () => {
-  delay = 100 - speedSlider.value;
-});
-algorithmSelect.addEventListener("change", () => {
-  algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
-});
-sortButton.addEventListener("click", async () => {
-  if (isSorting) return;
-  isSorting = true;
-  comparisons = 0; swaps = 0;
-  timeDisplay.textContent = 0;
-  comparisonsDisplay.textContent = comparisons;
-  swapsDisplay.textContent = swaps;
-  startTime = performance.now();
-  
-  switch (algorithmSelect.value) {
-    case "bubbleSort": await bubbleSort(); break;
-    case "selectionSort": await selectionSort(); break;
-    case "insertionSort": await insertionSort(); break;
-    case "mergeSort": await mergeSort(); break;
-    case "quickSort": await quickSort(); break;
-    case "heapSort": await heapSort(); break;
-  }
-  const endTime = performance.now();
-  timeDisplay.textContent = Math.floor(endTime - startTime);
-  isSorting = false;
-});
-pauseButton.addEventListener("click", () => {
-  if (isSorting) {
-    isPaused = !isPaused;
-    pauseButton.textContent = isPaused ? "Resume" : "Pause";
-  }
-});
-resetButton.addEventListener("click", () => { reset(); });
-useCustomArrayButton.addEventListener("click", () => {
-  if (isSorting) return;
-  const customArray = customArrayInput.value.split(",").map((num) => parseInt(num.trim())).filter((num) => !isNaN(num));
-  if (customArray.length >= 5 && customArray.length <= 100) {
-    array = customArray;
-    arraySize = array.length;
-    sizeSlider.value = arraySize;
-    renderArray();
-  } else {
-    alert("Custom array must have between 5 and 100 elements.");
-  }
-});
+if (generateArrayButton) generateArrayButton.addEventListener("click", generateArray);
+
+if (sizeSlider) {
+  sizeSlider.addEventListener("input", () => {
+    arraySize = sizeSlider.value;
+    if (sizeInput) sizeInput.value = arraySize;
+    generateArray();
+  });
+}
+if (sizeInput) {
+  sizeInput.addEventListener("input", () => {
+    let val = parseInt(sizeInput.value);
+    if (val >= 5 && val <= 100) {
+      arraySize = val;
+      if (sizeSlider) sizeSlider.value = arraySize;
+      generateArray();
+    }
+  });
+}
+
+if (speedSlider) {
+  speedSlider.addEventListener("input", () => {
+    delay = 100 - speedSlider.value;
+  });
+}
+if (algorithmSelect) {
+  algorithmSelect.addEventListener("change", () => {
+    if (algorithmDescription) algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
+  });
+}
+if (sortButton) {
+  sortButton.addEventListener("click", async () => {
+    if (isSorting || isComparing) return;
+    isSorting = true;
+    comparisons = 0; swaps = 0;
+    if (timeDisplay) timeDisplay.textContent = 0;
+    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+    if (swapsDisplay) swapsDisplay.textContent = swaps;
+    startTime = performance.now();
+    
+    switch (algorithmSelect.value) {
+      case "bubbleSort": await bubbleSort(); break;
+      case "selectionSort": await selectionSort(); break;
+      case "insertionSort": await insertionSort(); break;
+      case "mergeSort": await mergeSort(); break;
+      case "quickSort": await quickSort(); break;
+      case "heapSort": await heapSort(); break;
+    }
+    const endTime = performance.now();
+    if (timeDisplay) timeDisplay.textContent = Math.floor(endTime - startTime);
+    isSorting = false;
+  });
+}
+if (pauseButton) {
+  pauseButton.addEventListener("click", () => {
+    if (isSorting) {
+      isPaused = !isPaused;
+      pauseButton.textContent = isPaused ? "Resume" : "Pause";
+    }
+  });
+}
+if (resetButton) resetButton.addEventListener("click", () => { reset(); });
+
+if (useCustomArrayButton) {
+  useCustomArrayButton.addEventListener("click", () => {
+    if (isSorting) return;
+    const customArray = customArrayInput.value.split(",").map((num) => parseInt(num.trim())).filter((num) => !isNaN(num));
+    if (customArray.length >= 5 && customArray.length <= 100) {
+      array = customArray;
+      arraySize = array.length;
+      if (sizeSlider) sizeSlider.value = arraySize;
+      if (sizeInput) sizeInput.value = arraySize;
+      renderArray();
+    } else {
+      alert("Custom array must have between 5 and 100 elements.");
+    }
+  });
+}
 
 
 // =====================================================================
-// --- NEW DUAL-ENGINE REAL-TIME COMPARISON VISUALIZER LOGIC ---
+// --- DUAL-ENGINE REAL-TIME COMPARISON VISUALIZER LOGIC ---
 // =====================================================================
 
 const compAlgo1Select = document.getElementById("compAlgo1");
@@ -372,14 +412,19 @@ const compSwaps2Display = document.getElementById("compSwaps2");
 
 let isComparing = false;
 
-compAlgo1Select.addEventListener("change", () => {
-  compTitle1.textContent = compAlgo1Select.options[compAlgo1Select.selectedIndex].text;
-});
-compAlgo2Select.addEventListener("change", () => {
-  compTitle2.textContent = compAlgo2Select.options[compAlgo2Select.selectedIndex].text;
-});
+if (compAlgo1Select) {
+  compAlgo1Select.addEventListener("change", () => {
+    if (compTitle1) compTitle1.textContent = compAlgo1Select.options[compAlgo1Select.selectedIndex].text;
+  });
+}
+if (compAlgo2Select) {
+  compAlgo2Select.addEventListener("change", () => {
+    if (compTitle2) compTitle2.textContent = compAlgo2Select.options[compAlgo2Select.selectedIndex].text;
+  });
+}
 
 function renderCompArray(container, TargetArray, highlightIndices = [], swapIndices = [], sortedIndices = []) {
+  if (!container) return;
   container.innerHTML = "";
   for (let i = 0; i < TargetArray.length; i++) {
     const bar = document.createElement("div");
@@ -394,33 +439,41 @@ function renderCompArray(container, TargetArray, highlightIndices = [], swapIndi
   }
 }
 
-startComparisonBtn.addEventListener("click", async () => {
-  if (isComparing || isSorting) return; 
-  isComparing = true;
-  startComparisonBtn.disabled = true;
+if (startComparisonBtn) {
+  startComparisonBtn.addEventListener("click", async () => {
+    if (isComparing || isSorting) return; 
+    isComparing = true;
+    startComparisonBtn.disabled = true;
 
-  const arrayCopy1 = [...array];
-  const arrayCopy2 = [...array];
+    // Fallback if master array isn't populated yet
+    if (array.length === 0) generateArray();
 
-  let stats1 = { comparisons: 0, swaps: 0, array: arrayCopy1, container: compContainer1, compDisplay: compComparisons1Display, swapDisplay: compSwaps1Display };
-  let stats2 = { comparisons: 0, swaps: 0, array: arrayCopy2, container: compContainer2, compDisplay: compComparisons2Display, swapDisplay: compSwaps2Display };
+    const arrayCopy1 = [...array];
+    const arrayCopy2 = [...array];
 
-  compComparisons1Display.textContent = 0;
-  compComparisons2Display.textContent = 0;
-  compSwaps1Display.textContent = 0;
-  compSwaps2Display.textContent = 0;
+    let stats1 = { comparisons: 0, swaps: 0, array: arrayCopy1, container: compContainer1, compDisplay: compComparisons1Display, swapDisplay: compSwaps1Display };
+    let stats2 = { comparisons: 0, swaps: 0, array: arrayCopy2, container: compContainer2, compDisplay: compComparisons2Display, swapDisplay: compSwaps2Display };
 
-  renderCompArray(compContainer1, stats1.array);
-  renderCompArray(compContainer2, stats2.array);
+    if (compComparisons1Display) compComparisons1Display.textContent = 0;
+    if (compComparisons2Display) compComparisons2Display.textContent = 0;
+    if (compSwaps1Display) compSwaps1Display.textContent = 0;
+    if (compSwaps2Display) compSwaps2Display.textContent = 0;
 
-  await Promise.all([
-    executeCompSort(compAlgo1Select.value, stats1),
-    executeCompSort(compAlgo2Select.value, stats2)
-  ]);
+    renderCompArray(compContainer1, stats1.array);
+    renderCompArray(compContainer2, stats2.array);
 
-  isComparing = false;
-  startComparisonBtn.disabled = false;
-});
+    const a1 = compAlgo1Select ? compAlgo1Select.value : "bubbleSort";
+    const a2 = compAlgo2Select ? compAlgo2Select.value : "selectionSort";
+
+    await Promise.all([
+      executeCompSort(a1, stats1),
+      executeCompSort(a2, stats2)
+    ]);
+
+    isComparing = false;
+    startComparisonBtn.disabled = false;
+  });
+}
 
 async function executeCompSort(algoName, stats) {
   switch (algoName) {
@@ -437,7 +490,7 @@ async function executeCompSort(algoName, stats) {
 async function compSwap(stats, i, j) {
   [stats.array[i], stats.array[j]] = [stats.array[j], stats.array[i]];
   stats.swaps++;
-  stats.swapDisplay.textContent = stats.swaps;
+  if (stats.swapDisplay) stats.swapDisplay.textContent = stats.swaps;
   renderCompArray(stats.container, stats.array, [], [i, j]);
   await sleep(delay);
 }
@@ -447,7 +500,7 @@ async function compBubbleSort(stats) {
   let arr = stats.array;
   for (let i = 0; i < arr.length - 1; i++) {
     for (let j = 0; j < arr.length - i - 1; j++) {
-      stats.comparisons++; stats.compDisplay.textContent = stats.comparisons;
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
       renderCompArray(stats.container, arr, [j, j + 1]);
       await sleep(delay);
       if (arr[j] > arr[j + 1]) await compSwap(stats, j, j + 1);
@@ -460,7 +513,7 @@ async function compSelectionSort(stats) {
   for (let i = 0; i < arr.length - 1; i++) {
     let minIdx = i;
     for (let j = i + 1; j < arr.length; j++) {
-      stats.comparisons++; stats.compDisplay.textContent = stats.comparisons;
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
       renderCompArray(stats.container, arr, [j, minIdx]);
       await sleep(delay);
       if (arr[j] < arr[minIdx]) minIdx = j;
@@ -475,7 +528,7 @@ async function compInsertionSort(stats) {
     let key = arr[i];
     let j = i - 1;
     while (j >= 0 && arr[j] > key) {
-      stats.comparisons++; stats.compDisplay.textContent = stats.comparisons;
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
       renderCompArray(stats.container, arr, [j, j + 1]);
       await sleep(delay);
       arr[j + 1] = arr[j];
@@ -498,7 +551,7 @@ async function compMergeSort(stats, low, high) {
 async function compMerge(stats, low, mid, high) {
   let arr = stats.array; const temp = []; let i = low, j = mid + 1;
   while (i <= mid && j <= high) {
-    stats.comparisons++; stats.compDisplay.textContent = stats.comparisons;
+    stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
     renderCompArray(stats.container, arr, [i, j]);
     await sleep(delay);
     if (arr[i] <= arr[j]) temp.push(arr[i++]);
@@ -523,7 +576,7 @@ async function compQuickSort(stats, low, high) {
 async function compPartition(stats, low, high) {
   let arr = stats.array; const pivot = arr[high]; let i = low - 1;
   for (let j = low; j < high; j++) {
-    stats.comparisons++; stats.compDisplay.textContent = stats.comparisons;
+    stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
     renderCompArray(stats.container, arr, [j, high]);
     await sleep(delay);
     if (arr[j] < pivot) { i++; await compSwap(stats, i, j); }
@@ -547,6 +600,8 @@ async function compHeapify(stats, n, i) {
   if (largest !== i) { await compSwap(stats, i, largest); await compHeapify(stats, n, largest); }
 }
 
-// Initialize Application Frame
+// --- INITIALIZE APPLICATION FRAMES ---
 generateArray();
-algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
+if (algorithmSelect && algorithmDescription) {
+  algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
+}
