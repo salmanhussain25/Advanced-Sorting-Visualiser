@@ -1,4 +1,3 @@
-
 // =====================================================================
 // 1. CORE DOM ELEMENTS & SELECTION
 // =====================================================================
@@ -54,7 +53,6 @@ const algorithmDescriptions = {
 // =====================================================================
 // 2. REUSABLE SYSTEM CORE COMPONENT: RENDERING GRAPHICS
 // =====================================================================
-// We updated your main component logic so it can render to ANY window container automatically
 function renderArray(targetContainer = arrayContainer, targetArray = array, highlightIndices = [], swapIndices = [], sortedIndices = []) {
   if (!targetContainer) return;
   targetContainer.innerHTML = "";
@@ -81,10 +79,6 @@ function generateArray() {
   }
   renderArray(arrayContainer, array);
 }
-
-// Sound System Safety Configuration
-const swapSound = new Audio("swap.wav");
-const compareSound = new Audio("compare.wav");
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -125,7 +119,6 @@ async function sharedSwap(engineState, i, j) {
   engineState.swapsCount++;
   if (engineState.swapDisplayElement) engineState.swapDisplayElement.textContent = engineState.swapsCount;
   renderArray(engineState.viewContainer, engineState.arrayData, [], [i, j]);
-  if (engineState.isMainEngine) swapSound.play().catch(() => {});
   await sleep(delay);
 }
 
@@ -137,7 +130,6 @@ async function runBubbleSort(state) {
       if (isPaused && state.isMainEngine) await pause();
       state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
       renderArray(state.viewContainer, arr, [j, j + 1]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
       await sleep(delay);
       if (arr[j] > arr[j + 1]) await sharedSwap(state, j, j + 1);
     }
@@ -152,7 +144,6 @@ async function runSelectionSort(state) {
       if (isPaused && state.isMainEngine) await pause();
       state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
       renderArray(state.viewContainer, arr, [j, minIdx]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
       await sleep(delay);
       if (arr[j] < arr[minIdx]) minIdx = j;
     }
@@ -168,7 +159,6 @@ async function runInsertionSort(state) {
       if (isPaused && state.isMainEngine) await pause();
       state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
       renderArray(state.viewContainer, arr, [j, j + 1]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
       await sleep(delay);
       arr[j + 1] = arr[j];
       j--;
@@ -193,7 +183,6 @@ async function executeMerge(state, low, mid, high) {
     if (isPaused && state.isMainEngine) await pause();
     state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
     renderArray(state.viewContainer, arr, [i, j]);
-    if (state.isMainEngine) compareSound.play().catch(() => {});
     await sleep(delay);
     if (arr[i] <= arr[j]) temp.push(arr[i++]);
     else temp.push(arr[j++]);
@@ -220,7 +209,6 @@ async function executePartition(state, low, high) {
     if (isPaused && state.isMainEngine) await pause();
     state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
     renderArray(state.viewContainer, arr, [j, high]);
-    if (state.isMainEngine) compareSound.play().catch(() => {});
     await sleep(delay);
     if (arr[j] < pivot) { i++; await sharedSwap(state, i, j); }
   }
@@ -262,19 +250,16 @@ if (startComparisonBtn) {
   startComparisonBtn.addEventListener("click", async () => {
     if (isComparing || isSorting) return;
     
-    // Safety check: verify base workspace state has items inside it
     if (!array || array.length === 0) generateArray();
 
     isComparing = true;
     startComparisonBtn.disabled = true;
 
-    // Zero out layout displays
     if (compComparisons1Display) compComparisons1Display.textContent = 0;
     if (compComparisons2Display) compComparisons2Display.textContent = 0;
     if (compSwaps1Display) compSwaps1Display.textContent = 0;
     if (compSwaps2Display) compSwaps2Display.textContent = 0;
 
-    // SETUP SEPARATE STATES BUT MAP THEM INTO THE SAME MASTER GRAPHICS SYSTEM
     let engine1State = {
       isMainEngine: false,
       arrayData: [...array],
@@ -295,7 +280,6 @@ if (startComparisonBtn) {
       swapDisplayElement: compSwaps2Display
     };
 
-    // Render baseline state to custom nodes
     renderArray(compContainer1, engine1State.arrayData);
     renderArray(compContainer2, engine2State.arrayData);
 
@@ -303,7 +287,6 @@ if (startComparisonBtn) {
     const targetAlgo2 = compAlgo2Select ? compAlgo2Select.value : "selectionSort";
 
     try {
-      // EXECUTE BOTH SIDE-BY-SIDE SIMULTANEOUSLY 
       await Promise.all([
         orchestrateRouting(targetAlgo1, engine1State),
         orchestrateRouting(targetAlgo2, engine2State)
@@ -429,5 +412,3 @@ try {
 if (algorithmSelect && algorithmDescription) {
   algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
 }
-
-```
