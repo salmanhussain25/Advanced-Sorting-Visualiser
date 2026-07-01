@@ -21,6 +21,7 @@ const sizeInput = document.getElementById("sizeInput");
 // Core App State Variables
 let array = [];
 let arraySize = sizeSlider ? parseInt(sizeSlider.value) : 30;
+let delay = 100 - (speedSlider ? parseInt(speedSlider.value) : 50);
 let isSorting = false;
 let isPaused = false;
 let comparisons = 0;
@@ -61,12 +62,16 @@ function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []
   }
 }
 
+// Audio Handling (Safely ignores errors if audio files aren't found)
+const swapSound = new Audio("swap.wav");
+const compareSound = new Audio("compare.wav");
 
 async function swap(i, j) {
   [array[i], array[j]] = [array[j], array[i]];
   swaps++;
   if (swapsDisplay) swapsDisplay.textContent = swaps;
   renderArray([], [i, j]);
+  swapSound.play().catch(() => {}); 
   await sleep(delay);
 }
 
@@ -110,6 +115,7 @@ async function bubbleSort() {
       comparisons++;
       if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
       if (array[j] > array[j + 1]) await swap(j, j + 1);
     }
@@ -125,6 +131,7 @@ async function selectionSort() {
       comparisons++;
       if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, minIndex]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
       if (array[j] < array[minIndex]) minIndex = j;
     }
@@ -142,6 +149,7 @@ async function insertionSort() {
       comparisons++;
       if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
       array[j + 1] = array[j];
       j--;
@@ -173,6 +181,7 @@ async function merge(low, mid, high) {
     comparisons++;
     if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([i, j]);
+    compareSound.play().catch(() => {});
     await sleep(delay);
     if (array[i] <= array[j]) temp.push(array[i++]);
     else temp.push(array[j++]);
@@ -205,6 +214,7 @@ async function partition(low, high) {
     comparisons++;
     if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([j, high]);
+    compareSound.play().catch(() => {});
     await sleep(delay);
     if (array[j] < pivot) {
       i++;
