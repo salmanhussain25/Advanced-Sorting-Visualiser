@@ -428,5 +428,3 @@ try {
 if (algorithmSelect && algorithmDescription) {
   algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
 }
-
-```
