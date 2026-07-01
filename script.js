@@ -1,4 +1,6 @@
-// --- ORIGINAL CORE DOM ELEMENTS ---
+// =====================================================================
+// 1. CORE DOM ELEMENTS & SAFETY WRAPPERS
+// =====================================================================
 const arrayContainer = document.getElementById("arrayContainer");
 const generateArrayButton = document.getElementById("generateArray");
 const sizeSlider = document.getElementById("sizeSlider");
@@ -14,13 +16,12 @@ const algorithmDescription = document.getElementById("algorithmDescription");
 const comparisonsDisplay = document.getElementById("comparisons");
 const swapsDisplay = document.getElementById("swaps");
 const timeDisplay = document.getElementById("time");
-
-// Sync exact number input if it exists
 const sizeInput = document.getElementById("sizeInput");
 
+// Core App State Variables
 let array = [];
-let arraySize = sizeSlider ? sizeSlider.value : 30;
-let delay = 100 - (speedSlider ? speedSlider.value : 50);
+let arraySize = sizeSlider ? parseInt(sizeSlider.value) : 30;
+let delay = 100 - (speedSlider ? parseInt(speedSlider.value) : 50);
 let isSorting = false;
 let isPaused = false;
 let comparisons = 0;
@@ -36,7 +37,9 @@ const algorithmDescriptions = {
   heapSort: "Heap Sort builds a heap and repeatedly extracts the maximum element.",
 };
 
-// Generate a random array
+// =====================================================================
+// 2. PRIMARY WINDOW ARRAY LOGIC
+// =====================================================================
 function generateArray() {
   array = [];
   for (let i = 0; i < arraySize; i++) {
@@ -45,75 +48,6 @@ function generateArray() {
   renderArray();
 }
 
-// --- THEME SWAPPING CONTROLS ---
-const themeToggle = document.getElementById("themeToggle");
-const gradientTheme = document.getElementById("gradientTheme");
-const neonTheme = document.getElementById("neonTheme");
-const woodenTheme = document.getElementById("woodenTheme");
-
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-    document.querySelector("header")?.classList.toggle("dark-mode");
-    document.querySelector("footer")?.classList.toggle("dark-mode");
-    themeToggle.innerHTML = document.body.classList.contains("dark-mode")
-      ? '<i class="fas fa-sun"></i>'
-      : '<i class="fas fa-moon"></i>';
-  });
-}
-
-if (gradientTheme) {
-  gradientTheme.addEventListener("click", () => {
-    if (document.body.classList.contains("gradient-mode")) {
-      document.body.classList.remove("gradient-mode");
-      document.querySelector("header")?.classList.remove("gradient-mode");
-      document.querySelector("footer")?.classList.remove("gradient-mode");
-    } else {
-      document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
-      document.body.classList.add("gradient-mode");
-      document.querySelector("header")?.classList.remove("dark-mode", "neon-mode", "wooden-mode");
-      document.querySelector("header")?.classList.add("gradient-mode");
-      document.querySelector("footer")?.classList.remove("dark-mode", "neon-mode", "wooden-mode");
-      document.querySelector("footer")?.classList.add("gradient-mode");
-    }
-  });
-}
-
-if (neonTheme) {
-  neonTheme.addEventListener("click", () => {
-    if (document.body.classList.contains("neon-mode")) {
-      document.body.classList.remove("neon-mode");
-      document.querySelector("header")?.classList.remove("neon-mode");
-      document.querySelector("footer")?.classList.remove("neon-mode");
-    } else {
-      document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-      document.body.classList.add("neon-mode");
-      document.querySelector("header")?.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-      document.querySelector("header")?.classList.add("neon-mode");
-      document.querySelector("footer")?.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-      document.querySelector("footer")?.classList.add("neon-mode");
-    }
-  });
-}
-
-if (woodenTheme) {
-  woodenTheme.addEventListener("click", () => {
-    if (document.body.classList.contains("wooden-mode")) {
-      document.body.classList.remove("wooden-mode");
-      document.querySelector("header")?.classList.remove("wooden-mode");
-      document.querySelector("footer")?.classList.remove("wooden-mode");
-    } else {
-      document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
-      document.body.classList.add("wooden-mode");
-      document.querySelector("header")?.classList.remove("dark-mode", "gradient-mode", "neon-mode");
-      document.querySelector("header")?.classList.add("wooden-mode");
-      document.querySelector("footer")?.classList.remove("dark-mode", "gradient-mode", "neon-mode");
-      document.querySelector("footer")?.classList.add("wooden-mode");
-    }
-  });
-}
-
-// Render the main window array
 function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []) {
   if (!arrayContainer) return;
   arrayContainer.innerHTML = "";
@@ -128,7 +62,7 @@ function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []
   }
 }
 
-// Audio configurations (Safely handles missing files)
+// Audio Handling (Safely ignores errors if audio files aren't found)
 const swapSound = new Audio("swap.wav");
 const compareSound = new Audio("compare.wav");
 
@@ -145,7 +79,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// --- ORIGINAL CONTROLS (PAUSE/RESET) ---
 function pause() {
   return new Promise((resolve) => {
     const resumeButton = document.getElementById("pause");
@@ -172,7 +105,9 @@ function reset() {
   generateArray();
 }
 
-// --- ORIGINAL STANDARD ALGORITHMS ---
+// =====================================================================
+// 3. MAIN INTERFACE ALGORITHMS
+// =====================================================================
 async function bubbleSort() {
   for (let i = 0; i < array.length - 1; i++) {
     for (let j = 0; j < array.length - i - 1; j++) {
@@ -184,7 +119,6 @@ async function bubbleSort() {
       await sleep(delay);
       if (array[j] > array[j + 1]) await swap(j, j + 1);
     }
-    renderArray([], [], [array.length - i - 1]);
   }
   renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
@@ -202,7 +136,6 @@ async function selectionSort() {
       if (array[j] < array[minIndex]) minIndex = j;
     }
     if (minIndex !== i) await swap(i, minIndex);
-    renderArray([], [], [i]);
   }
   renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
@@ -313,12 +246,48 @@ async function heapify(n, i) {
   }
 }
 
-// --- ORIGINAL EVENT LISTENERS ---
+// =====================================================================
+// 4. THEME CONTROLS (CRASH-PROOFED)
+// =====================================================================
+const themeToggle = document.getElementById("themeToggle");
+const gradientTheme = document.getElementById("gradientTheme");
+const neonTheme = document.getElementById("neonTheme");
+const woodenTheme = document.getElementById("woodenTheme");
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    document.querySelector("header")?.classList.toggle("dark-mode");
+    document.querySelector("footer")?.classList.toggle("dark-mode");
+  });
+}
+if (gradientTheme) {
+  gradientTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
+    document.body.classList.add("gradient-mode");
+  });
+}
+if (neonTheme) {
+  neonTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
+    document.body.classList.add("neon-mode");
+  });
+}
+if (woodenTheme) {
+  woodenTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
+    document.body.classList.add("wooden-mode");
+  });
+}
+
+// =====================================================================
+// 5. MAIN EVENT LISTENERS SETUP
+// =====================================================================
 if (generateArrayButton) generateArrayButton.addEventListener("click", generateArray);
 
 if (sizeSlider) {
   sizeSlider.addEventListener("input", () => {
-    arraySize = sizeSlider.value;
+    arraySize = parseInt(sizeSlider.value);
     if (sizeInput) sizeInput.value = arraySize;
     generateArray();
   });
@@ -333,10 +302,9 @@ if (sizeInput) {
     }
   });
 }
-
 if (speedSlider) {
   speedSlider.addEventListener("input", () => {
-    delay = 100 - speedSlider.value;
+    delay = 100 - parseInt(speedSlider.value);
   });
 }
 if (algorithmSelect) {
@@ -393,11 +361,9 @@ if (useCustomArrayButton) {
   });
 }
 
-
 // =====================================================================
-// --- DUAL-ENGINE REAL-TIME COMPARISON VISUALIZER LOGIC ---
+// 6. REAL-TIME COMPARISON VISUALIZER LOGIC (CRASH-PROOF)
 // =====================================================================
-
 const compAlgo1Select = document.getElementById("compAlgo1");
 const compAlgo2Select = document.getElementById("compAlgo2");
 const startComparisonBtn = document.getElementById("startComparisonBtn");
@@ -445,8 +411,9 @@ if (startComparisonBtn) {
     isComparing = true;
     startComparisonBtn.disabled = true;
 
-    // Fallback if master array isn't populated yet
-    if (array.length === 0) generateArray();
+    if (!array || array.length === 0) {
+      generateArray();
+    }
 
     const arrayCopy1 = [...array];
     const arrayCopy2 = [...array];
@@ -459,19 +426,23 @@ if (startComparisonBtn) {
     if (compSwaps1Display) compSwaps1Display.textContent = 0;
     if (compSwaps2Display) compSwaps2Display.textContent = 0;
 
-    renderCompArray(compContainer1, stats1.array);
-    renderCompArray(compContainer2, stats2.array);
+    if (compContainer1) renderCompArray(compContainer1, stats1.array);
+    if (compContainer2) renderCompArray(compContainer2, stats2.array);
 
     const a1 = compAlgo1Select ? compAlgo1Select.value : "bubbleSort";
     const a2 = compAlgo2Select ? compAlgo2Select.value : "selectionSort";
 
-    await Promise.all([
-      executeCompSort(a1, stats1),
-      executeCompSort(a2, stats2)
-    ]);
-
-    isComparing = false;
-    startComparisonBtn.disabled = false;
+    try {
+      await Promise.all([
+        executeCompSort(a1, stats1),
+        executeCompSort(a2, stats2)
+      ]);
+    } catch (err) {
+      console.error("Comparison run caught an error:", err);
+    } finally {
+      isComparing = false;
+      startComparisonBtn.disabled = false;
+    }
   });
 }
 
@@ -495,7 +466,7 @@ async function compSwap(stats, i, j) {
   await sleep(delay);
 }
 
-// --- ISOLATED COMPARISON PIPELINES ---
+// --- ISOLATED REAL-TIME DUAL PIPELINES ---
 async function compBubbleSort(stats) {
   let arr = stats.array;
   for (let i = 0; i < arr.length - 1; i++) {
@@ -600,8 +571,15 @@ async function compHeapify(stats, n, i) {
   if (largest !== i) { await compSwap(stats, i, largest); await compHeapify(stats, n, largest); }
 }
 
-// --- INITIALIZE APPLICATION FRAMES ---
-generateArray();
+// =====================================================================
+// 7. BASE APPLICATION INITIALIZATION
+// =====================================================================
+try {
+  generateArray();
+} catch (e) {
+  console.warn("Initial default array building bypassed. Container element might be missing.", e);
+}
+
 if (algorithmSelect && algorithmDescription) {
   algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
 }
