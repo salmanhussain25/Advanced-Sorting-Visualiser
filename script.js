@@ -1,5 +1,5 @@
 // =====================================================================
-// 1. CORE DOM ELEMENTS & SELECTION
+// 1. CORE DOM ELEMENTS & SAFETY WRAPPERS
 // =====================================================================
 const arrayContainer = document.getElementById("arrayContainer");
 const generateArrayButton = document.getElementById("generateArray");
@@ -9,6 +9,7 @@ const algorithmSelect = document.getElementById("algorithm");
 const sortButton = document.getElementById("sort");
 const pauseButton = document.getElementById("pause");
 const resetButton = document.getElementById("reset");
+const stepButton = document.getElementById("step");
 const customArrayInput = document.getElementById("customArray");
 const useCustomArrayButton = document.getElementById("useCustomArray");
 const algorithmDescription = document.getElementById("algorithmDescription");
@@ -17,25 +18,11 @@ const swapsDisplay = document.getElementById("swaps");
 const timeDisplay = document.getElementById("time");
 const sizeInput = document.getElementById("sizeInput");
 
-// Dual Comparison Elements
-const compAlgo1Select = document.getElementById("compAlgo1");
-const compAlgo2Select = document.getElementById("compAlgo2");
-const startComparisonBtn = document.getElementById("startComparisonBtn");
-const compTitle1 = document.getElementById("compTitle1");
-const compTitle2 = document.getElementById("compTitle2");
-const compContainer1 = document.getElementById("compContainer1");
-const compContainer2 = document.getElementById("compContainer2");
-const compComparisons1Display = document.getElementById("compComparisons1");
-const compComparisons2Display = document.getElementById("compComparisons2");
-const compSwaps1Display = document.getElementById("compSwaps1");
-const compSwaps2Display = document.getElementById("compSwaps2");
-
-// Shared Global App State
+// Core App State Variables
 let array = [];
 let arraySize = sizeSlider ? parseInt(sizeSlider.value) : 30;
 let delay = 100 - (speedSlider ? parseInt(speedSlider.value) : 50);
 let isSorting = false;
-let isComparing = false;
 let isPaused = false;
 let comparisons = 0;
 let swaps = 0;
@@ -51,39 +38,42 @@ const algorithmDescriptions = {
 };
 
 // =====================================================================
-// 2. REUSABLE SYSTEM CORE COMPONENT: RENDERING GRAPHICS
+// 2. PRIMARY WINDOW ARRAY LOGIC
 // =====================================================================
-// We updated your main component logic so it can render to ANY window container automatically
-function renderArray(targetContainer = arrayContainer, targetArray = array, highlightIndices = [], swapIndices = [], sortedIndices = []) {
-  if (!targetContainer) return;
-  targetContainer.innerHTML = "";
-  
-  for (let i = 0; i < targetArray.length; i++) {
-    const bar = document.createElement("div");
-    bar.className = "arrayBar";
-    bar.style.height = `${targetArray[i]}%`;
-    bar.style.flex = "1";
-    bar.style.margin = "0 1px";
-    
-    if (highlightIndices.includes(i)) bar.classList.add("comparing");
-    if (swapIndices.includes(i)) bar.classList.add("swapping");
-    if (sortedIndices.includes(i)) bar.classList.add("sorted");
-    
-    targetContainer.appendChild(bar);
-  }
-}
-
 function generateArray() {
   array = [];
   for (let i = 0; i < arraySize; i++) {
     array.push(Math.floor(Math.random() * 100) + 1);
   }
-  renderArray(arrayContainer, array);
+  renderArray();
 }
 
-// Sound System Safety Configuration
+function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []) {
+  if (!arrayContainer) return;
+  arrayContainer.innerHTML = "";
+  for (let i = 0; i < array.length; i++) {
+    const bar = document.createElement("div");
+    bar.className = "arrayBar";
+    bar.style.height = `${array[i]}%`;
+    if (highlightIndices.includes(i)) bar.classList.add("comparing");
+    if (swapIndices.includes(i)) bar.classList.add("swapping");
+    if (sortedIndices.includes(i)) bar.classList.add("sorted");
+    arrayContainer.appendChild(bar);
+  }
+}
+
+// Audio Handling (Safely ignores errors if audio files aren't found)
 const swapSound = new Audio("swap.wav");
 const compareSound = new Audio("compare.wav");
+
+async function swap(i, j) {
+  [array[i], array[j]] = [array[j], array[i]];
+  swaps++;
+  if (swapsDisplay) swapsDisplay.textContent = swaps;
+  renderArray([], [i, j]);
+  swapSound.play().catch(() => {}); 
+  await sleep(delay);
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -106,7 +96,6 @@ function pause() {
 
 function reset() {
   isSorting = false;
-  isComparing = false;
   isPaused = false;
   comparisons = 0;
   swaps = 0;
@@ -117,207 +106,182 @@ function reset() {
 }
 
 // =====================================================================
-// 3. CORE ENGINES FOR BOTH SINGLE INTERFACE & DUAL RUNNER
+// 3. MAIN INTERFACE ALGORITHMS
 // =====================================================================
-async function sharedSwap(engineState, i, j) {
-  [engineState.arrayData[i], engineState.arrayData[j]] = [engineState.arrayData[j], engineState.arrayData[i]];
-  engineState.swapsCount++;
-  if (engineState.swapDisplayElement) engineState.swapDisplayElement.textContent = engineState.swapsCount;
-  renderArray(engineState.viewContainer, engineState.arrayData, [], [i, j]);
-  if (engineState.isMainEngine) swapSound.play().catch(() => {});
-  await sleep(delay);
-}
-
-// --- MASTER SORT PIPELINES ---
-async function runBubbleSort(state) {
-  let arr = state.arrayData;
-  for (let i = 0; i < arr.length - 1; i++) {
-    for (let j = 0; j < arr.length - i - 1; j++) {
-      if (isPaused && state.isMainEngine) await pause();
-      state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
-      renderArray(state.viewContainer, arr, [j, j + 1]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
+async function bubbleSort() {
+  for (let i = 0; i < array.length - 1; i++) {
+    for (let j = 0; j < array.length - i - 1; j++) {
+      if (isPaused) await pause();
+      comparisons++;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      renderArray([j, j + 1]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
-      if (arr[j] > arr[j + 1]) await sharedSwap(state, j, j + 1);
+      if (array[j] > array[j + 1]) await swap(j, j + 1);
     }
   }
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
 
-async function runSelectionSort(state) {
-  let arr = state.arrayData;
-  for (let i = 0; i < arr.length - 1; i++) {
-    let minIdx = i;
-    for (let j = i + 1; j < arr.length; j++) {
-      if (isPaused && state.isMainEngine) await pause();
-      state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
-      renderArray(state.viewContainer, arr, [j, minIdx]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
+async function selectionSort() {
+  for (let i = 0; i < array.length - 1; i++) {
+    let minIndex = i;
+    for (let j = i + 1; j < array.length; j++) {
+      if (isPaused) await pause();
+      comparisons++;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      renderArray([j, minIndex]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
-      if (arr[j] < arr[minIdx]) minIdx = j;
+      if (array[j] < array[minIndex]) minIndex = j;
     }
-    if (minIdx !== i) await sharedSwap(state, i, minIdx);
+    if (minIndex !== i) await swap(i, minIndex);
   }
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
 
-async function runInsertionSort(state) {
-  let arr = state.arrayData;
-  for (let i = 1; i < arr.length; i++) {
-    let key = arr[i]; let j = i - 1;
-    while (j >= 0 && arr[j] > key) {
-      if (isPaused && state.isMainEngine) await pause();
-      state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
-      renderArray(state.viewContainer, arr, [j, j + 1]);
-      if (state.isMainEngine) compareSound.play().catch(() => {});
+async function insertionSort() {
+  for (let i = 1; i < array.length; i++) {
+    let key = array[i];
+    let j = i - 1;
+    while (j >= 0 && array[j] > key) {
+      if (isPaused) await pause();
+      comparisons++;
+      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      renderArray([j, j + 1]);
+      compareSound.play().catch(() => {});
       await sleep(delay);
-      arr[j + 1] = arr[j];
+      array[j + 1] = array[j];
       j--;
     }
-    arr[j + 1] = key;
-    renderArray(state.viewContainer, arr, [], [j + 1]);
+    array[j + 1] = key;
+    renderArray([], [], [j + 1]);
     await sleep(delay);
   }
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
 
-async function runMergeSort(state, low = 0, high = state.arrayData.length - 1) {
+async function mergeSort() {
+  await mergeSortHelper(0, array.length - 1);
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
+}
+async function mergeSortHelper(low, high) {
   if (low < high) {
     const mid = Math.floor((low + high) / 2);
-    await runMergeSort(state, low, mid);
-    await runMergeSort(state, mid + 1, high);
-    await executeMerge(state, low, mid, high);
+    await mergeSortHelper(low, mid);
+    await mergeSortHelper(mid + 1, high);
+    await merge(low, mid, high);
   }
 }
-async function executeMerge(state, low, mid, high) {
-  let arr = state.arrayData; const temp = []; let i = low, j = mid + 1;
+async function merge(low, mid, high) {
+  const temp = [];
+  let i = low, j = mid + 1;
   while (i <= mid && j <= high) {
-    if (isPaused && state.isMainEngine) await pause();
-    state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
-    renderArray(state.viewContainer, arr, [i, j]);
-    if (state.isMainEngine) compareSound.play().catch(() => {});
+    if (isPaused) await pause();
+    comparisons++;
+    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+    renderArray([i, j]);
+    compareSound.play().catch(() => {});
     await sleep(delay);
-    if (arr[i] <= arr[j]) temp.push(arr[i++]);
-    else temp.push(arr[j++]);
+    if (array[i] <= array[j]) temp.push(array[i++]);
+    else temp.push(array[j++]);
   }
-  while (i <= mid) temp.push(arr[i++]);
-  while (j <= high) temp.push(arr[j++]);
+  while (i <= mid) temp.push(array[i++]);
+  while (j <= high) temp.push(array[j++]);
   for (let k = low; k <= high; k++) {
-    arr[k] = temp[k - low];
-    renderArray(state.viewContainer, arr, [], [k]);
+    array[k] = temp[k - low];
+    renderArray([], [], [k]);
     await sleep(delay);
   }
 }
 
-async function runQuickSort(state, low = 0, high = state.arrayData.length - 1) {
+async function quickSort() {
+  await quickSortHelper(0, array.length - 1);
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
+}
+async function quickSortHelper(low, high) {
   if (low < high) {
-    const pivotIdx = await executePartition(state, low, high);
-    await runQuickSort(state, low, pivotIdx - 1);
-    await runQuickSort(state, pivotIdx + 1, high);
+    const pivotIndex = await partition(low, high);
+    await quickSortHelper(low, pivotIndex - 1);
+    await quickSortHelper(pivotIndex + 1, high);
   }
 }
-async function executePartition(state, low, high) {
-  let arr = state.arrayData; const pivot = arr[high]; let i = low - 1;
+async function partition(low, high) {
+  const pivot = array[high];
+  let i = low - 1;
   for (let j = low; j < high; j++) {
-    if (isPaused && state.isMainEngine) await pause();
-    state.compCount++; if (state.compDisplayElement) state.compDisplayElement.textContent = state.compCount;
-    renderArray(state.viewContainer, arr, [j, high]);
-    if (state.isMainEngine) compareSound.play().catch(() => {});
+    if (isPaused) await pause();
+    comparisons++;
+    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+    renderArray([j, high]);
+    compareSound.play().catch(() => {});
     await sleep(delay);
-    if (arr[j] < pivot) { i++; await sharedSwap(state, i, j); }
+    if (array[j] < pivot) {
+      i++;
+      await swap(i, j);
+    }
   }
-  await sharedSwap(state, i + 1, high);
+  await swap(i + 1, high);
   return i + 1;
 }
 
-async function runHeapSort(state) {
-  let arr = state.arrayData; const n = arr.length;
-  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) await executeHeapify(state, n, i);
+async function heapSort() {
+  const n = array.length;
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) await heapify(n, i);
   for (let i = n - 1; i > 0; i--) {
-    await sharedSwap(state, 0, i);
-    await executeHeapify(state, i, 0);
+    await swap(0, i);
+    await heapify(i, 0);
   }
+  renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
-async function executeHeapify(state, n, i) {
-  let arr = state.arrayData; let largest = i; const left = 2 * i + 1; const right = 2 * i + 2;
-  if (left < n && arr[left] > arr[largest]) largest = left;
-  if (right < n && arr[right] > arr[largest]) largest = right;
-  if (largest !== i) { await sharedSwap(state, i, largest); await executeHeapify(state, n, largest); }
-}
-
-async function orchestrateRouting(algoName, engineState) {
-  switch (algoName) {
-    case "bubbleSort": await runBubbleSort(engineState); break;
-    case "selectionSort": await runSelectionSort(engineState); break;
-    case "insertionSort": await runInsertionSort(engineState); break;
-    case "mergeSort": await runMergeSort(engineState); break;
-    case "quickSort": await runQuickSort(engineState); break;
-    case "heapSort": await runHeapSort(engineState); break;
+async function heapify(n, i) {
+  let largest = i;
+  const left = 2 * i + 1;
+  const right = 2 * i + 2;
+  if (left < n && array[left] > array[largest]) largest = left;
+  if (right < n && array[right] > array[largest]) largest = right;
+  if (largest !== i) {
+    await swap(i, largest);
+    await heapify(n, largest);
   }
-  renderArray(engineState.viewContainer, engineState.arrayData, [], [], Array.from({ length: engineState.arrayData.length }, (_, i) => i));
 }
 
 // =====================================================================
-// 4. PARALLEL COMPARISON ACTION DISPATCHER
+// 4. THEME CONTROLS (CRASH-PROOFED)
 // =====================================================================
-if (startComparisonBtn) {
-  startComparisonBtn.addEventListener("click", async () => {
-    if (isComparing || isSorting) return;
-    
-    // Safety check: verify base workspace state has items inside it
-    if (!array || array.length === 0) generateArray();
+const themeToggle = document.getElementById("themeToggle");
+const gradientTheme = document.getElementById("gradientTheme");
+const neonTheme = document.getElementById("neonTheme");
+const woodenTheme = document.getElementById("woodenTheme");
 
-    isComparing = true;
-    startComparisonBtn.disabled = true;
-
-    // Zero out layout displays
-    if (compComparisons1Display) compComparisons1Display.textContent = 0;
-    if (compComparisons2Display) compComparisons2Display.textContent = 0;
-    if (compSwaps1Display) compSwaps1Display.textContent = 0;
-    if (compSwaps2Display) compSwaps2Display.textContent = 0;
-
-    // SETUP SEPARATE STATES BUT MAP THEM INTO THE SAME MASTER GRAPHICS SYSTEM
-    let engine1State = {
-      isMainEngine: false,
-      arrayData: [...array],
-      viewContainer: compContainer1,
-      compCount: 0,
-      swapsCount: 0,
-      compDisplayElement: compComparisons1Display,
-      swapDisplayElement: compSwaps1Display
-    };
-
-    let engine2State = {
-      isMainEngine: false,
-      arrayData: [...array],
-      viewContainer: compContainer2,
-      compCount: 0,
-      swapsCount: 0,
-      compDisplayElement: compComparisons2Display,
-      swapDisplayElement: compSwaps2Display
-    };
-
-    // Render baseline state to custom nodes
-    renderArray(compContainer1, engine1State.arrayData);
-    renderArray(compContainer2, engine2State.arrayData);
-
-    const targetAlgo1 = compAlgo1Select ? compAlgo1Select.value : "bubbleSort";
-    const targetAlgo2 = compAlgo2Select ? compAlgo2Select.value : "selectionSort";
-
-    try {
-      // EXECUTE BOTH SIDE-BY-SIDE SIMULTANEOUSLY 
-      await Promise.all([
-        orchestrateRouting(targetAlgo1, engine1State),
-        orchestrateRouting(targetAlgo2, engine2State)
-      ]);
-    } catch (err) {
-      console.error("Parallel asynchronous engine error execution crash:", err);
-    } finally {
-      isComparing = false;
-      startComparisonBtn.disabled = false;
-    }
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+    document.querySelector("header")?.classList.toggle("dark-mode");
+    document.querySelector("footer")?.classList.toggle("dark-mode");
+  });
+}
+if (gradientTheme) {
+  gradientTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
+    document.body.classList.add("gradient-mode");
+  });
+}
+if (neonTheme) {
+  neonTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
+    document.body.classList.add("neon-mode");
+  });
+}
+if (woodenTheme) {
+  woodenTheme.addEventListener("click", () => {
+    document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
+    document.body.classList.add("wooden-mode");
   });
 }
 
 // =====================================================================
-// 5. STANDARD CONTROL BOARD HANDLING
+// 5. MAIN EVENT LISTENERS SETUP
 // =====================================================================
 if (generateArrayButton) generateArrayButton.addEventListener("click", generateArray);
 
@@ -348,7 +312,6 @@ if (algorithmSelect) {
     if (algorithmDescription) algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
   });
 }
-
 if (sortButton) {
   sortButton.addEventListener("click", async () => {
     if (isSorting || isComparing) return;
@@ -358,25 +321,20 @@ if (sortButton) {
     if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     if (swapsDisplay) swapsDisplay.textContent = swaps;
     startTime = performance.now();
-
-    let mainEngineState = {
-      isMainEngine: true,
-      arrayData: array,
-      viewContainer: arrayContainer,
-      compCount: comparisons,
-      swapsCount: swaps,
-      compDisplayElement: comparisonsDisplay,
-      swapDisplayElement: swapsDisplay
-    };
     
-    await orchestrateRouting(algorithmSelect.value, mainEngineState);
-    
+    switch (algorithmSelect.value) {
+      case "bubbleSort": await bubbleSort(); break;
+      case "selectionSort": await selectionSort(); break;
+      case "insertionSort": await insertionSort(); break;
+      case "mergeSort": await mergeSort(); break;
+      case "quickSort": await quickSort(); break;
+      case "heapSort": await heapSort(); break;
+    }
     const endTime = performance.now();
     if (timeDisplay) timeDisplay.textContent = Math.floor(endTime - startTime);
     isSorting = false;
   });
 }
-
 if (pauseButton) {
   pauseButton.addEventListener("click", () => {
     if (isSorting) {
@@ -385,28 +343,40 @@ if (pauseButton) {
     }
   });
 }
-if (resetButton) resetButton.addEventListener("click", reset);
+if (resetButton) resetButton.addEventListener("click", () => { reset(); });
 
 if (useCustomArrayButton) {
   useCustomArrayButton.addEventListener("click", () => {
-    if (isSorting || isComparing) return;
-    if (!customArrayInput || !customArrayInput.value.trim()) return;
-    
-    const customArray = customArrayInput.value.split(",")
-      .map((num) => parseInt(num.trim()))
-      .filter((num) => !isNaN(num));
-      
+    if (isSorting) return;
+    const customArray = customArrayInput.value.split(",").map((num) => parseInt(num.trim())).filter((num) => !isNaN(num));
     if (customArray.length >= 5 && customArray.length <= 100) {
       array = customArray;
       arraySize = array.length;
       if (sizeSlider) sizeSlider.value = arraySize;
       if (sizeInput) sizeInput.value = arraySize;
-      renderArray(arrayContainer, array);
+      renderArray();
     } else {
-      alert("Custom array must contain between 5 and 100 valid numbers.");
+      alert("Custom array must have between 5 and 100 elements.");
     }
   });
 }
+
+// =====================================================================
+// 6. REAL-TIME COMPARISON VISUALIZER LOGIC (CRASH-PROOF)
+// =====================================================================
+const compAlgo1Select = document.getElementById("compAlgo1");
+const compAlgo2Select = document.getElementById("compAlgo2");
+const startComparisonBtn = document.getElementById("startComparisonBtn");
+const compTitle1 = document.getElementById("compTitle1");
+const compTitle2 = document.getElementById("compTitle2");
+const compContainer1 = document.getElementById("compContainer1");
+const compContainer2 = document.getElementById("compContainer2");
+const compComparisons1Display = document.getElementById("compComparisons1");
+const compComparisons2Display = document.getElementById("compComparisons2");
+const compSwaps1Display = document.getElementById("compSwaps1");
+const compSwaps2Display = document.getElementById("compSwaps2");
+
+let isComparing = false;
 
 if (compAlgo1Select) {
   compAlgo1Select.addEventListener("change", () => {
@@ -419,12 +389,197 @@ if (compAlgo2Select) {
   });
 }
 
-// Base Initializer
+function renderCompArray(container, TargetArray, highlightIndices = [], swapIndices = [], sortedIndices = []) {
+  if (!container) return;
+  container.innerHTML = "";
+  for (let i = 0; i < TargetArray.length; i++) {
+    const bar = document.createElement("div");
+    bar.className = "arrayBar";
+    bar.style.height = `${TargetArray[i]}%`;
+    bar.style.flex = "1";
+    bar.style.margin = "0 1px";
+    if (highlightIndices.includes(i)) bar.classList.add("comparing");
+    if (swapIndices.includes(i)) bar.classList.add("swapping");
+    if (sortedIndices.includes(i)) bar.classList.add("sorted");
+    container.appendChild(bar);
+  }
+}
+
+if (startComparisonBtn) {
+  startComparisonBtn.addEventListener("click", async () => {
+    if (isComparing || isSorting) return; 
+    isComparing = true;
+    startComparisonBtn.disabled = true;
+
+    if (!array || array.length === 0) {
+      generateArray();
+    }
+
+    const arrayCopy1 = [...array];
+    const arrayCopy2 = [...array];
+
+    let stats1 = { comparisons: 0, swaps: 0, array: arrayCopy1, container: compContainer1, compDisplay: compComparisons1Display, swapDisplay: compSwaps1Display };
+    let stats2 = { comparisons: 0, swaps: 0, array: arrayCopy2, container: compContainer2, compDisplay: compComparisons2Display, swapDisplay: compSwaps2Display };
+
+    if (compComparisons1Display) compComparisons1Display.textContent = 0;
+    if (compComparisons2Display) compComparisons2Display.textContent = 0;
+    if (compSwaps1Display) compSwaps1Display.textContent = 0;
+    if (compSwaps2Display) compSwaps2Display.textContent = 0;
+
+    if (compContainer1) renderCompArray(compContainer1, stats1.array);
+    if (compContainer2) renderCompArray(compContainer2, stats2.array);
+
+    const a1 = compAlgo1Select ? compAlgo1Select.value : "bubbleSort";
+    const a2 = compAlgo2Select ? compAlgo2Select.value : "selectionSort";
+
+    try {
+      await Promise.all([
+        executeCompSort(a1, stats1),
+        executeCompSort(a2, stats2)
+      ]);
+    } catch (err) {
+      console.error("Comparison run caught an error:", err);
+    } finally {
+      isComparing = false;
+      startComparisonBtn.disabled = false;
+    }
+  });
+}
+
+async function executeCompSort(algoName, stats) {
+  switch (algoName) {
+    case "bubbleSort": await compBubbleSort(stats); break;
+    case "selectionSort": await compSelectionSort(stats); break;
+    case "insertionSort": await compInsertionSort(stats); break;
+    case "mergeSort": await compMergeSort(stats, 0, stats.array.length - 1); break;
+    case "quickSort": await compQuickSort(stats, 0, stats.array.length - 1); break;
+    case "heapSort": await compHeapSort(stats); break;
+  }
+  renderCompArray(stats.container, stats.array, [], [], Array.from({ length: stats.array.length }, (_, i) => i));
+}
+
+async function compSwap(stats, i, j) {
+  [stats.array[i], stats.array[j]] = [stats.array[j], stats.array[i]];
+  stats.swaps++;
+  if (stats.swapDisplay) stats.swapDisplay.textContent = stats.swaps;
+  renderCompArray(stats.container, stats.array, [], [i, j]);
+  await sleep(delay);
+}
+
+// --- ISOLATED REAL-TIME DUAL PIPELINES ---
+async function compBubbleSort(stats) {
+  let arr = stats.array;
+  for (let i = 0; i < arr.length - 1; i++) {
+    for (let j = 0; j < arr.length - i - 1; j++) {
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
+      renderCompArray(stats.container, arr, [j, j + 1]);
+      await sleep(delay);
+      if (arr[j] > arr[j + 1]) await compSwap(stats, j, j + 1);
+    }
+  }
+}
+
+async function compSelectionSort(stats) {
+  let arr = stats.array;
+  for (let i = 0; i < arr.length - 1; i++) {
+    let minIdx = i;
+    for (let j = i + 1; j < arr.length; j++) {
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
+      renderCompArray(stats.container, arr, [j, minIdx]);
+      await sleep(delay);
+      if (arr[j] < arr[minIdx]) minIdx = j;
+    }
+    if (minIdx !== i) await compSwap(stats, i, minIdx);
+  }
+}
+
+async function compInsertionSort(stats) {
+  let arr = stats.array;
+  for (let i = 1; i < arr.length; i++) {
+    let key = arr[i];
+    let j = i - 1;
+    while (j >= 0 && arr[j] > key) {
+      stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
+      renderCompArray(stats.container, arr, [j, j + 1]);
+      await sleep(delay);
+      arr[j + 1] = arr[j];
+      j--;
+    }
+    arr[j + 1] = key;
+    renderCompArray(stats.container, arr, [], [j + 1]);
+    await sleep(delay);
+  }
+}
+
+async function compMergeSort(stats, low, high) {
+  if (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    await compMergeSort(stats, low, mid);
+    await compMergeSort(stats, mid + 1, high);
+    await compMerge(stats, low, mid, high);
+  }
+}
+async function compMerge(stats, low, mid, high) {
+  let arr = stats.array; const temp = []; let i = low, j = mid + 1;
+  while (i <= mid && j <= high) {
+    stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
+    renderCompArray(stats.container, arr, [i, j]);
+    await sleep(delay);
+    if (arr[i] <= arr[j]) temp.push(arr[i++]);
+    else temp.push(arr[j++]);
+  }
+  while (i <= mid) temp.push(arr[i++]);
+  while (j <= high) temp.push(arr[j++]);
+  for (let k = low; k <= high; k++) {
+    arr[k] = temp[k - low];
+    renderCompArray(stats.container, arr, [], [k]);
+    await sleep(delay);
+  }
+}
+
+async function compQuickSort(stats, low, high) {
+  if (low < high) {
+    const pivotIndex = await compPartition(stats, low, high);
+    await compQuickSort(stats, low, pivotIndex - 1);
+    await compQuickSort(stats, pivotIndex + 1, high);
+  }
+}
+async function compPartition(stats, low, high) {
+  let arr = stats.array; const pivot = arr[high]; let i = low - 1;
+  for (let j = low; j < high; j++) {
+    stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
+    renderCompArray(stats.container, arr, [j, high]);
+    await sleep(delay);
+    if (arr[j] < pivot) { i++; await compSwap(stats, i, j); }
+  }
+  await compSwap(stats, i + 1, high);
+  return i + 1;
+}
+
+async function compHeapSort(stats) {
+  let arr = stats.array; const n = arr.length;
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) await compHeapify(stats, n, i);
+  for (let i = n - 1; i > 0; i--) {
+    await compSwap(stats, 0, i);
+    await compHeapify(stats, i, 0);
+  }
+}
+async function compHeapify(stats, n, i) {
+  let arr = stats.array; let largest = i; const left = 2 * i + 1; const right = 2 * i + 2;
+  if (left < n && arr[left] > arr[largest]) largest = left;
+  if (right < n && arr[right] > arr[largest]) largest = right;
+  if (largest !== i) { await compSwap(stats, i, largest); await compHeapify(stats, n, largest); }
+}
+
+// =====================================================================
+// 7. BASE APPLICATION INITIALIZATION
+// =====================================================================
 try {
   generateArray();
 } catch (e) {
-  console.warn("Baseline array render skipped.", e);
+  console.warn("Initial default array building bypassed. Container element might be missing.", e);
 }
+
 if (algorithmSelect && algorithmDescription) {
   algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
 }
