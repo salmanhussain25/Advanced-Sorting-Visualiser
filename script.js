@@ -1,5 +1,5 @@
 
-
+```javascript
 // =====================================================================
 // 1. CORE DOM ELEMENTS & SELECTION
 // =====================================================================
@@ -430,3 +430,5 @@ try {
 if (algorithmSelect && algorithmDescription) {
   algorithmDescription.textContent = algorithmDescriptions[algorithmSelect.value];
 }
+
+```
