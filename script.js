@@ -1,5 +1,5 @@
 // =====================================================================
-// 1. CORE DOM ELEMENTS & SAFETY WRAPPERS
+// 1. CORE DOM ELEMENTS & STATE
 // =====================================================================
 const arrayContainer = document.getElementById("arrayContainer");
 const generateArrayButton = document.getElementById("generateArray");
@@ -9,7 +9,6 @@ const algorithmSelect = document.getElementById("algorithm");
 const sortButton = document.getElementById("sort");
 const pauseButton = document.getElementById("pause");
 const resetButton = document.getElementById("reset");
-const stepButton = document.getElementById("step");
 const customArrayInput = document.getElementById("customArray");
 const useCustomArrayButton = document.getElementById("useCustomArray");
 const algorithmDescription = document.getElementById("algorithmDescription");
@@ -18,7 +17,7 @@ const swapsDisplay = document.getElementById("swaps");
 const timeDisplay = document.getElementById("time");
 const sizeInput = document.getElementById("sizeInput");
 
-// Core App State Variables
+// Core Application State Variables
 let array = [];
 let arraySize = sizeSlider ? parseInt(sizeSlider.value) : 30;
 let delay = 100 - (speedSlider ? parseInt(speedSlider.value) : 50);
@@ -38,7 +37,7 @@ const algorithmDescriptions = {
 };
 
 // =====================================================================
-// 2. PRIMARY WINDOW ARRAY LOGIC
+// 2. PRIMARY SCREEN RENDER & GEN LOGIC
 // =====================================================================
 function generateArray() {
   array = [];
@@ -62,7 +61,7 @@ function renderArray(highlightIndices = [], swapIndices = [], sortedIndices = []
   }
 }
 
-// Audio Handling (Safely ignores errors if audio files aren't found)
+// Sound Configuration (Gracefully fails if audio assets don't exist)
 const swapSound = new Audio("swap.wav");
 const compareSound = new Audio("compare.wav");
 
@@ -106,14 +105,13 @@ function reset() {
 }
 
 // =====================================================================
-// 3. MAIN INTERFACE ALGORITHMS
+// 3. MAIN WINDOW ALGORITHMS
 // =====================================================================
 async function bubbleSort() {
   for (let i = 0; i < array.length - 1; i++) {
     for (let j = 0; j < array.length - i - 1; j++) {
       if (isPaused) await pause();
-      comparisons++;
-      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      comparisons++; if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
       compareSound.play().catch(() => {});
       await sleep(delay);
@@ -125,29 +123,26 @@ async function bubbleSort() {
 
 async function selectionSort() {
   for (let i = 0; i < array.length - 1; i++) {
-    let minIndex = i;
+    let minIdx = i;
     for (let j = i + 1; j < array.length; j++) {
       if (isPaused) await pause();
-      comparisons++;
-      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
-      renderArray([j, minIndex]);
+      comparisons++; if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      renderArray([j, minIdx]);
       compareSound.play().catch(() => {});
       await sleep(delay);
-      if (array[j] < array[minIndex]) minIndex = j;
+      if (array[j] < array[minIdx]) minIdx = j;
     }
-    if (minIndex !== i) await swap(i, minIndex);
+    if (minIdx !== i) await swap(i, minIdx);
   }
   renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
 
 async function insertionSort() {
   for (let i = 1; i < array.length; i++) {
-    let key = array[i];
-    let j = i - 1;
+    let key = array[i]; let j = i - 1;
     while (j >= 0 && array[j] > key) {
       if (isPaused) await pause();
-      comparisons++;
-      if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+      comparisons++; if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
       renderArray([j, j + 1]);
       compareSound.play().catch(() => {});
       await sleep(delay);
@@ -174,12 +169,10 @@ async function mergeSortHelper(low, high) {
   }
 }
 async function merge(low, mid, high) {
-  const temp = [];
-  let i = low, j = mid + 1;
+  const temp = []; let i = low, j = mid + 1;
   while (i <= mid && j <= high) {
     if (isPaused) await pause();
-    comparisons++;
-    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+    comparisons++; if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([i, j]);
     compareSound.play().catch(() => {});
     await sleep(delay);
@@ -201,25 +194,20 @@ async function quickSort() {
 }
 async function quickSortHelper(low, high) {
   if (low < high) {
-    const pivotIndex = await partition(low, high);
-    await quickSortHelper(low, pivotIndex - 1);
-    await quickSortHelper(pivotIndex + 1, high);
+    const pivotIdx = await partition(low, high);
+    await quickSortHelper(low, pivotIdx - 1);
+    await quickSortHelper(pivotIdx + 1, high);
   }
 }
 async function partition(low, high) {
-  const pivot = array[high];
-  let i = low - 1;
+  const pivot = array[high]; let i = low - 1;
   for (let j = low; j < high; j++) {
     if (isPaused) await pause();
-    comparisons++;
-    if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
+    comparisons++; if (comparisonsDisplay) comparisonsDisplay.textContent = comparisons;
     renderArray([j, high]);
     compareSound.play().catch(() => {});
     await sleep(delay);
-    if (array[j] < pivot) {
-      i++;
-      await swap(i, j);
-    }
+    if (array[j] < pivot) { i++; await swap(i, j); }
   }
   await swap(i + 1, high);
   return i + 1;
@@ -235,53 +223,14 @@ async function heapSort() {
   renderArray([], [], Array.from({ length: array.length }, (_, i) => i));
 }
 async function heapify(n, i) {
-  let largest = i;
-  const left = 2 * i + 1;
-  const right = 2 * i + 2;
+  let largest = i; const left = 2 * i + 1; const right = 2 * i + 2;
   if (left < n && array[left] > array[largest]) largest = left;
   if (right < n && array[right] > array[largest]) largest = right;
-  if (largest !== i) {
-    await swap(i, largest);
-    await heapify(n, largest);
-  }
+  if (largest !== i) { await swap(i, largest); await heapify(n, largest); }
 }
 
 // =====================================================================
-// 4. THEME CONTROLS (CRASH-PROOFED)
-// =====================================================================
-const themeToggle = document.getElementById("themeToggle");
-const gradientTheme = document.getElementById("gradientTheme");
-const neonTheme = document.getElementById("neonTheme");
-const woodenTheme = document.getElementById("woodenTheme");
-
-if (themeToggle) {
-  themeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-    document.querySelector("header")?.classList.toggle("dark-mode");
-    document.querySelector("footer")?.classList.toggle("dark-mode");
-  });
-}
-if (gradientTheme) {
-  gradientTheme.addEventListener("click", () => {
-    document.body.classList.remove("dark-mode", "neon-mode", "wooden-mode");
-    document.body.classList.add("gradient-mode");
-  });
-}
-if (neonTheme) {
-  neonTheme.addEventListener("click", () => {
-    document.body.classList.remove("dark-mode", "gradient-mode", "wooden-mode");
-    document.body.classList.add("neon-mode");
-  });
-}
-if (woodenTheme) {
-  woodenTheme.addEventListener("click", () => {
-    document.body.classList.remove("dark-mode", "gradient-mode", "neon-mode");
-    document.body.classList.add("wooden-mode");
-  });
-}
-
-// =====================================================================
-// 5. MAIN EVENT LISTENERS SETUP
+// 4. MAIN EVENT WORKFLOW HANDLERS
 // =====================================================================
 if (generateArrayButton) generateArrayButton.addEventListener("click", generateArray);
 
@@ -343,12 +292,17 @@ if (pauseButton) {
     }
   });
 }
-if (resetButton) resetButton.addEventListener("click", () => { reset(); });
+if (resetButton) resetButton.addEventListener("click", reset);
 
 if (useCustomArrayButton) {
   useCustomArrayButton.addEventListener("click", () => {
-    if (isSorting) return;
-    const customArray = customArrayInput.value.split(",").map((num) => parseInt(num.trim())).filter((num) => !isNaN(num));
+    if (isSorting || isComparing) return;
+    if (!customArrayInput || !customArrayInput.value.trim()) return;
+    
+    const customArray = customArrayInput.value.split(",")
+      .map((num) => parseInt(num.trim()))
+      .filter((num) => !isNaN(num));
+      
     if (customArray.length >= 5 && customArray.length <= 100) {
       array = customArray;
       arraySize = array.length;
@@ -356,13 +310,13 @@ if (useCustomArrayButton) {
       if (sizeInput) sizeInput.value = arraySize;
       renderArray();
     } else {
-      alert("Custom array must have between 5 and 100 elements.");
+      alert("Custom array must contain between 5 and 100 valid numbers.");
     }
   });
 }
 
 // =====================================================================
-// 6. REAL-TIME COMPARISON VISUALIZER LOGIC (CRASH-PROOF)
+// 5. CRASH-PROOFED DUAL ENGINE REAL-TIME COMPARISON
 // =====================================================================
 const compAlgo1Select = document.getElementById("compAlgo1");
 const compAlgo2Select = document.getElementById("compAlgo2");
@@ -408,13 +362,16 @@ function renderCompArray(container, TargetArray, highlightIndices = [], swapIndi
 if (startComparisonBtn) {
   startComparisonBtn.addEventListener("click", async () => {
     if (isComparing || isSorting) return; 
-    isComparing = true;
-    startComparisonBtn.disabled = true;
-
+    
+    // Safety check: ensure we have an array populated from the screen context
     if (!array || array.length === 0) {
       generateArray();
     }
 
+    isComparing = true;
+    startComparisonBtn.disabled = true;
+
+    // READ & DUPLICATE THE ACTUAL CURRENT ACTIVE WORKSPACE ARRAY
     const arrayCopy1 = [...array];
     const arrayCopy2 = [...array];
 
@@ -438,7 +395,7 @@ if (startComparisonBtn) {
         executeCompSort(a2, stats2)
       ]);
     } catch (err) {
-      console.error("Comparison run caught an error:", err);
+      console.error("Comparison visualizer runtime execution exception:", err);
     } finally {
       isComparing = false;
       startComparisonBtn.disabled = false;
@@ -466,7 +423,7 @@ async function compSwap(stats, i, j) {
   await sleep(delay);
 }
 
-// --- ISOLATED REAL-TIME DUAL PIPELINES ---
+// --- ISOLATED COMPARISON PIPELINE ALGORITHMS ---
 async function compBubbleSort(stats) {
   let arr = stats.array;
   for (let i = 0; i < arr.length - 1; i++) {
@@ -496,8 +453,7 @@ async function compSelectionSort(stats) {
 async function compInsertionSort(stats) {
   let arr = stats.array;
   for (let i = 1; i < arr.length; i++) {
-    let key = arr[i];
-    let j = i - 1;
+    let key = arr[i]; let j = i - 1;
     while (j >= 0 && arr[j] > key) {
       stats.comparisons++; if (stats.compDisplay) stats.compDisplay.textContent = stats.comparisons;
       renderCompArray(stats.container, arr, [j, j + 1]);
@@ -539,9 +495,9 @@ async function compMerge(stats, low, mid, high) {
 
 async function compQuickSort(stats, low, high) {
   if (low < high) {
-    const pivotIndex = await compPartition(stats, low, high);
-    await compQuickSort(stats, low, pivotIndex - 1);
-    await compQuickSort(stats, pivotIndex + 1, high);
+    const pivotIdx = await compPartition(stats, low, high);
+    await compQuickSort(stats, low, pivotIdx - 1);
+    await compQuickSort(stats, pivotIdx + 1, high);
   }
 }
 async function compPartition(stats, low, high) {
@@ -552,7 +508,7 @@ async function compPartition(stats, low, high) {
     await sleep(delay);
     if (arr[j] < pivot) { i++; await compSwap(stats, i, j); }
   }
-  await compSwap(stats, i + 1, high);
+  await swap(stats, i + 1, high);
   return i + 1;
 }
 
@@ -572,12 +528,12 @@ async function compHeapify(stats, n, i) {
 }
 
 // =====================================================================
-// 7. BASE APPLICATION INITIALIZATION
+// 6. INITIALIZATION EXECUTION
 // =====================================================================
 try {
   generateArray();
 } catch (e) {
-  console.warn("Initial default array building bypassed. Container element might be missing.", e);
+  console.warn("Primary container initialization failed.", e);
 }
 
 if (algorithmSelect && algorithmDescription) {
