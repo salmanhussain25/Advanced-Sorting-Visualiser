@@ -79,21 +79,55 @@
     </section>
 
     <section id="comparison" aria-labelledby="comparison-heading">
-      <h2 id="comparison-heading">Algorithm Comparison</h2>
-      <div class="comparisonContainer">
-        <div class="algorithmStats">
-          <h3>Bubble Sort</h3>
-          <p>Comparisons: <span id="bubbleComparisons">0</span></p>
-          <p>Swaps: <span id="bubbleSwaps">0</span></p>
-        </div>
-        <div class="algorithmStats">
-          <h3>Selection Sort</h3>
-          <p>Comparisons: <span id="selectionComparisons">0</span></p>
-          <p>Swaps: <span id="selectionSwaps">0</span></p>
-        </div>
-        <!-- Add more algorithm stats here -->
-      </div>
-    </section>
+  <h2 id="comparison-heading">Real-Time Algorithm Comparison</h2>
+  
+  <div class="comparison-controls" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center; justify-content: center; flex-wrap: wrap;">
+    <div>
+      <label for="compAlgo1">Algorithm 1: </label>
+      <select id="compAlgo1">
+        <option value="bubbleSort">Bubble Sort</option>
+        <option value="selectionSort" selected>Selection Sort</option>
+        <option value="insertionSort">Insertion Sort</option>
+        <option value="mergeSort">Merge Sort</option>
+        <option value="quickSort">Quick Sort</option>
+        <option value="heapSort">Heap Sort</option>
+      </select>
+    </div>
+    
+    <div>
+      <label for="compAlgo2">Algorithm 2: </label>
+      <select id="compAlgo2">
+        <option value="bubbleSort">Bubble Sort</option>
+        <option value="selectionSort">Selection Sort</option>
+        <option value="insertionSort">Insertion Sort</option>
+        <option value="mergeSort" selected>Merge Sort</option>
+        <option value="quickSort">Quick Sort</option>
+        <option value="heapSort">Heap Sort</option>
+      </select>
+    </div>
+    
+    <button id="startComparisonBtn" style="padding: 8px 16px; cursor: pointer;"><i class="fas fa-play-circle"></i> Run Comparison</button>
+  </div>
+
+  <div class="comparisonContainer" style="display: flex; gap: 20px; justify-content: space-around; width: 100%;">
+    <!-- Left Engine View -->
+    <div class="algorithmStats" id="compWindow1" style="flex: 1; border: 1px solid #ccc; padding: 15px; border-radius: 8px;">
+      <h3 id="compTitle1">Selection Sort</h3>
+      <p>Comparisons: <span id="compComparisons1">0</span></p>
+      <p>Swaps: <span id="compSwaps1">0</span></p>
+      <div class="compArrayContainer" id="compContainer1" style="display: flex; align-items: flex-end; height: 150px; background: #f4f4f4; border-radius: 4px; padding: 5px; margin-top: 10px;"></div>
+    </div>
+    
+    <!-- Right Engine View -->
+    <div class="algorithmStats" id="compWindow2" style="flex: 1; border: 1px solid #ccc; padding: 15px; border-radius: 8px;">
+      <h3 id="compTitle2">Merge Sort</h3>
+      <p>Comparisons: <span id="compComparisons2">0</span></p>
+      <p>Swaps: <span id="compSwaps2">0</span></p>
+      <div class="compArrayContainer" id="compContainer2" style="display: flex; align-items: flex-end; height: 150px; background: #f4f4f4; border-radius: 4px; padding: 5px; margin-top: 10px;"></div>
+    </div>
+  </div>
+</section>
+    
   </main>
 
   <footer>
